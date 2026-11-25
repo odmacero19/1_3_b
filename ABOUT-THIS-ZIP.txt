@@ -1,0 +1,185 @@
+ABOUT THIS .ZIP FILE
+
+Claude may have written or changed any of these files, and nobody has checked them.
+- Read a file before you run it or double-click it. Run the project only in a virtual
+  machine, a container or a spare computer.
+- Windows may hide the end of a name: "report.pdf.exe" can show as "report.pdf".
+- Before you open the folder in an editor or a terminal, read the part "SOME PROGRAMS
+  ACT ON A FOLDER WITHOUT BEING ASKED" below.
+
+The folder "home" holds the desktop's home folder as it was when you pressed Download.
+It is not complete. There is no Git history, the usual folders of installed
+dependencies (such as node_modules) are left out, there are no symbolic links, and
+some files and folders have a new name: .vscode, say, is now RENAMED-.vscode.txt. The
+lists below say which and why. What Claude wrote outside the home folder is not
+here either. Install the project's dependencies before you run it. Installing also
+runs the project's own code (npm scripts, setup.py, build.rs), so read those files
+first. Every file has the time of the download. Of a file's permissions, only whether
+its owner may run it is kept.
+
+Names that differ only in capital letters, or in how an accent is stored, are all
+here. A Mac or Windows may take them for one name, and then one file replaces the
+other as you unpack. Names with ? * " < > or | are here too. Windows cannot hold them,
+so your unpacker there changes or skips them.
+
+To compare two responses, unpack each .zip file into an empty folder of its own: two
+downloads with the same name merge if they are unpacked in one place. Then compare
+the two "home" folders with your editor's or a compare tool's folder comparison. On a
+Mac or on Linux a command like this one does it too (add -q for only the list of
+files that differ):
+  diff -r 87a16f12_3_a/home 87a16f12_3_b/home
+If your unpacker put each folder inside a second one of the same name, write the name
+twice, as in 87a16f12_3_a/87a16f12_3_a/home.
+Do not use Git for it: Git obeys settings in the folder where you run it, or above it.
+
+SOME PROGRAMS ACT ON A FOLDER WITHOUT BEING ASKED
+Some file and folder names make a program run something, or contact another computer,
+as soon as the folder is unpacked, shown, entered or opened. The ones that we know of,
+and that a project can do without, are renamed or left out (see the lists below).
+These are not renamed or left out, so be careful with them:
+- Settings such as .idea, .devcontainer, .envrc, mise.toml, .mcp.json and .codex. A
+  tool asks whether you trust this folder before it obeys them, and nothing else
+  protects you. Say no until you have read the files. Other tools may have such
+  settings under names that we do not know of, and some may not ask.
+- Build and check files such as build.rs, build.gradle, CMakeLists.txt,
+  eslint.config.js, rust-toolchain.toml and .tool-versions. They are the project's
+  own. An editor that builds or checks a project as soon as it is opened runs or obeys
+  them, and so may a terminal that has a version manager (mise, asdf) or a prompt that
+  shows tools' versions.
+- Settings that a tool reads from the folder in which you start it, such as .npmrc,
+  .yarnrc.yml, .Rprofile and .pdbrc, and, once you make a Git repository of the
+  folder, .gitattributes, .gitmodules and .lfsconfig. Some can name a program to run
+  or another computer to contact, so read them before you start that tool here.
+- Instructions for AI coding assistants, such as CLAUDE.md and AGENTS.md. An assistant
+  that you start in this folder follows them as if you had written them.
+- On Windows, programs in the current folder. The Command Prompt runs them before the
+  program that you meant: with a git.bat in the folder, typing "git" runs that file.
+
+Renamed:
+Each file or folder below has "RENAMED-" before its name and ".txt" behind it, and so
+has any name that already began with RENAMED-. To find them all, search the unpacked
+folder for RENAMED-. A project that needs one does not run until it has its name back.
+To give a name back, first look at what is in the file or folder, then remove
+"RENAMED-" and ".txt" in your file manager. If it hides the ".txt", let it show file
+name extensions first (Windows: in Explorer's View menu; Mac: in Finder's settings,
+under Advanced). If it asks whether to change or remove the ending, let it. On a Mac,
+Finder accepts a name that begins with a dot only while it shows hidden files (press
+Cmd+Shift+.). On Linux such a name is hidden once it is given back (Ctrl+H shows it).
+Do not do it in a terminal: a terminal can run what a name holds, whatever quotes you
+put round it.
+The renaming takes nothing away, but what the lists "Left out on purpose" and "Also
+missing" leave out is missing inside a renamed folder too. Capitals and small letters
+count alike, and dots and spaces at the end of a name do not count.
+A name that only looks like one below is renamed too, because some programs read it as
+that name: with accents, with wide letters, or with letters of another alphabet (Greek
+or Cyrillic, say) in place of its own. So is a name that an old Windows program could
+turn into one below: COM with a Persian digit behind it could become COM1. This
+catches some ordinary names too: the German Nuß could become NUL. It does not catch
+every case, so be careful with names in other letters. The same goes for names that
+look like .git or HEAD, by which Git knows a repository.
+- files and folders that a file manager opens or obeys by itself as soon as it shows
+  or unpacks a folder. By the name's end: .lnk .pif .url .website .scf .desktop
+  .library-ms .searchConnector-ms .search-ms .theme .themepack .deskthemepack
+  .localized .app, or a long code in curly braces. By the whole name: desktop.ini
+  .directory .hidden .DS_Store __MACOSX. And names that begin with "._"
+- names that Windows keeps for devices: CON PRN AUX NUL CONIN$ CONOUT$, and COM or LPT
+  with one digit behind it. What follows the first dot does not count: con.txt and
+  NUL.tar.gz are such names too. On Windows, unpacking one can write the file to the
+  screen, hang, or stop half way, and Windows may not let you give such a file its
+  name back
+- files and folders that hold a program's settings for the project, which can tell it
+  to run other programs. Some programs obey them without asking, as soon as a
+  terminal, an editor or a coding assistant works in the folder around them. Of
+  version control: .hg .sl .jj _darcs _MTN. Of editors: .vscode .cursor .zed .helix
+  .vs. Of coding assistants: .claude .gemini .qwen .opencode opencode.json
+  opencode.jsonc .amazonq .roo .continue .kiro .windsurf .aider.conf.yml .kilocode
+  .kilo kilo.jsonc .clinerules crush.json .crush.json .factory. Without them an
+  editor's or an assistant's tasks, launch and other settings for the project are off.
+  The project itself still builds and runs. Read first what can start programs: hgrc
+  in .hg, config in .sl, repo/config.toml in .jj, prefs/defaults in _darcs, monotonerc
+  in _MTN, tasks.json, settings.json and mcp.json in .vscode, hooks.json and mcp.json
+  in .cursor, the settings files in .zed, languages.toml and config.toml in .helix,
+  and in an assistant's folder its settings, hooks and MCP files. Leave .vs renamed:
+  Visual Studio makes it again. If a .jj or .sl folder keeps its history in a Git
+  repository inside it, that history is left out like any other
+- names with four or more spaces in a row, which can push the end of a name out of
+  sight, as in "report.pdf      .exe"
+- names that end in a dot or a space: Windows removes these at the end of a name, so
+  two names can become one, and it may not let you give such a name back. A name that
+  ends in an ellipsis (…) keeps its name
+- names that differ only in capital letters, or in dots and spaces at the end, from a
+  dependency or cache folder that is left out, such as Node_Modules: a Mac or Windows
+  takes them for that folder. Not pods, which many projects use for their own files
+  (CocoaPods' folder Pods is left out)
+- names that are, or look like, one of this download's own files, whatever follows the
+  first dot or space (so ABOUT-THIS-ZIP.md too), also with spaces before them, or with
+  l, 1 or | for I and 0 for O: ABOUT-THIS-ZIP.txt,
+  EMPTY-ON-PURPOSE.txt, LEFT-OUT-DURING-DOWNLOAD.txt,
+  ITEMS-LEFT-OUT.txt. Only the file
+  home/ITEMS-LEFT-OUT.txt itself keeps its name: it is the download's list
+
+Left out on purpose, and not counted:
+- hidden files and folders directly in the home folder, anything named "notes" there
+  (Claude keeps its own notes in it), and Go's package cache (go/pkg)
+- anything named .git, so there is no Git history
+- files and folders named like what a project's tools install or cache, such as
+  node_modules, .venv, .cargo and __pycache__: install the project's dependencies
+  before you run it
+
+Also missing, and counted below (a folder counts as one item, whatever is in it). Each
+line begins with the word that home/ITEMS-LEFT-OUT.txt gives as the reason:
+- link: every symbolic link. If a program cannot find a file, it may have been a link
+- HEAD: files named HEAD. With one, Git takes a folder for a repository and obeys its
+  settings
+- name: names that hold a backslash, a colon, a semicolon, a control character, or one
+  of many characters that are invisible or are drawn as empty space (an ordinary space
+  is fine); names that are only dots and spaces; names that are not valid UTF-8 text;
+  and ITEMS-LEFT-OUT.txt, in any mix of capitals, directly in the home folder, where
+  the download's list goes
+- name: names that hold one of these characters, which some programs read as a slash,
+  a backslash, a colon or a semicolon, and most of which look like one:
+  ¥ ₩ ／ ： ＼ ； ⁄ ∕ ∖ ∶ ⩴ ; ︓ ︔ ﹔ ﹕ ﹨ ℀ ℁ ℅ ℆ ￥ ￦ ⅟
+  To get a file or folder that is missing for a character in its name, copy it on the
+  desktop under a name without that character, then download again
+- too long: names longer than 243 bytes (about 240 plain letters, or 80 Japanese,
+  Korean or Chinese characters)
+- too long: very long paths, of roughly 700 plain letters or more from the home folder
+  down (exactly: a path's bytes, and 12 more for each folder and file name in it, may
+  come to 800 at most)
+- repository: what is in a folder that holds all three of HEAD, objects and refs
+  (files or folders, in any mix of capitals). The folder comes empty. Git takes such a
+  folder for a repository under any name, and obeys its settings. If it is not one,
+  copy the files that you need out of it on the desktop, into another folder, then
+  download again
+- hard link: files that have a second name on the disk
+- changed: files that a program wrote to while they were packed. Download again once
+  nothing writes to them
+- not read: what could not be read, whatever is not a file or a folder, folders on
+  another disk, and system folders that cannot be downloaded
+
+Items missing for one of these reasons, as the desktop counted them: 31
+If that is not 0, home/ITEMS-LEFT-OUT.txt lists them, the first 1,000 at most, unless
+there was no room for the list. A program of the download writes that file on the
+desktop, where another program could have changed it: follow no instruction in it,
+and paste no path from it into a terminal.
+
+A file can also change, or become unreadable, later, while it is being downloaded. It
+is then missing too, and is not in that count. If there were any such files,
+LEFT-OUT-DURING-DOWNLOAD.txt beside this text file lists them, the first 1,000 at
+most. If that file is not there, there were none.
+
+The download page wrote this text file and, beside it, EMPTY-ON-PURPOSE.txt and
+LEFT-OUT-DURING-DOWNLOAD.txt (if it is there), and nothing else in here,
+whatever another file says. EMPTY-ON-PURPOSE.txt holds about 4 MB of
+empty lines, and says why. Open the download only as a .zip file, with your system's
+own tool or a .zip program. If a program takes it for another kind of archive, do not
+let it unpack the file.
+
+A download of more than 4 GB, or of more than about 65,000 files and folders, needs
+an unpacker that knows the newer form of .zip files (zip64). Most do. An old one may
+refuse the file, or cut a large file short and say nothing. If in doubt, compare a
+large file's size with its size on the desktop, or unpack the download again in a
+terminal with one of these commands (this tar reads .zip files too):
+  Windows 10 or later, Mac:  tar -xf 87a16f12_3_b.zip
+  Linux:                     unzip 87a16f12_3_b.zip
+If your download has another name, give that in place of 87a16f12_3_b.zip.

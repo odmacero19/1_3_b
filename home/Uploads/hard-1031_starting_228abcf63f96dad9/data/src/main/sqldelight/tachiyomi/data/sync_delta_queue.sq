@@ -1,0 +1,202 @@
+-- Local changes waiting to be uploaded by the delta sync engine.
+--
+-- Rows are inserted by the version triggers on mangas / chapters / mangas_categories whenever a row
+-- becomes dirty (is_syncing = 0). At most one PENDING row exists per record, so repeated edits
+-- collapse into a single upload of the latest row state.
+--
+-- Lifecycle:  PENDING --claim--> IN_FLIGHT --upload ok--> (deleted)
+--                                    |--upload failed--> PENDING (retry) or FAILED (gave up for now)
+CREATE TABLE sync_delta_queue(
+    _id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    table_name TEXT NOT NULL CHECK (table_name IN ('mangas', 'chapters')),
+    record_id INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'IN_FLIGHT', 'FAILED')),
+    batch_id TEXT,
+    attempt_count INTEGER NOT NULL DEFAULT 0,
+    last_error TEXT,
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+    updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+);
+
+CREATE UNIQUE INDEX sync_delta_queue_pending_unique ON sync_delta_queue(table_name, record_id) WHERE status = 'PENDING';
+CREATE INDEX sync_delta_queue_status_index ON sync_delta_queue(status, _id);
+CREATE INDEX sync_delta_queue_batch_index ON sync_delta_queue(batch_id) WHERE batch_id IS NOT NULL;
+CREATE INDEX sync_delta_queue_record_index ON sync_delta_queue(table_name, record_id);
+
+-- Small key/value store for sync bookkeeping (pull cursor). Lives in the database so that the cursor
+-- is advanced in the same transaction that applies the corresponding remote changes.
+CREATE TABLE sync_state(
+    key TEXT NOT NULL PRIMARY KEY,
+    value TEXT NOT NULL
+);
+
+enqueue:
+INSERT OR IGNORE INTO sync_delta_queue(table_name, record_id)
+VALUES (:tableName, :recordId);
+
+countPending:
+SELECT count(*)
+FROM sync_delta_queue
+WHERE status = 'PENDING';
+
+countFailed:
+SELECT count(*)
+FROM sync_delta_queue
+WHERE status = 'FAILED';
+
+countQueued:
+SELECT count(*)
+FROM sync_delta_queue
+WHERE table_name = :tableName
+AND record_id = :recordId;
+
+-- Claim the oldest PENDING entries for one upload attempt.
+claimBatch:
+UPDATE sync_delta_queue
+SET status = 'IN_FLIGHT',
+    batch_id = :batchId,
+    updated_at = strftime('%s', 'now')
+WHERE _id IN (
+    SELECT _id
+    FROM sync_delta_queue
+    WHERE status = 'PENDING'
+    ORDER BY _id
+    LIMIT :limit
+);
+
+countClaimed:
+SELECT count(*)
+FROM sync_delta_queue
+WHERE batch_id = :batchId
+AND status = 'IN_FLIGHT';
+
+-- Only the rows referenced by the claimed batch are loaded, never a full table.
+getClaimedMangas:
+SELECT M.*
+FROM mangas M
+JOIN sync_delta_queue Q
+ON Q.table_name = 'mangas'
+AND Q.record_id = M._id
+WHERE Q.batch_id = :batchId
+AND Q.status = 'IN_FLIGHT'
+ORDER BY M._id;
+
+getClaimedChapters:
+SELECT
+    C.*,
+    M.source AS manga_source,
+    M.url AS manga_url
+FROM chapters C
+JOIN mangas M
+ON M._id = C.manga_id
+JOIN sync_delta_queue Q
+ON Q.table_name = 'chapters'
+AND Q.record_id = C._id
+WHERE Q.batch_id = :batchId
+AND Q.status = 'IN_FLIGHT'
+ORDER BY C._id;
+
+getClaimedMangaCategoryNames:
+SELECT
+    MC.manga_id,
+    CAT.name
+FROM mangas_categories MC
+JOIN categories CAT
+ON CAT._id = MC.category_id
+JOIN sync_delta_queue Q
+ON Q.table_name = 'mangas'
+AND Q.record_id = MC.manga_id
+WHERE Q.batch_id = :batchId
+AND Q.status = 'IN_FLIGHT'
+ORDER BY MC.manga_id, CAT.sort;
+
+-- Upload succeeded (or the rows no longer exist): drop the claimed entries.
+completeBatch:
+DELETE FROM sync_delta_queue
+WHERE batch_id = :batchId
+AND status = 'IN_FLIGHT';
+
+-- Upload failed: hand the claimed entries back. A unique-index clash means the record was modified
+-- again while in flight and already has a newer PENDING entry that supersedes this one; such
+-- entries are ignored here and then removed by completeBatch. Entries that hit the retry limit, or
+-- failed permanently, become FAILED instead of PENDING.
+releaseBatch:
+UPDATE OR IGNORE sync_delta_queue
+SET status = CASE WHEN :permanent = 1 OR attempt_count + 1 >= :maxAttempts THEN 'FAILED' ELSE 'PENDING' END,
+    batch_id = NULL,
+    attempt_count = attempt_count + 1,
+    last_error = :error,
+    updated_at = strftime('%s', 'now')
+WHERE batch_id = :batchId
+AND status = 'IN_FLIGHT';
+
+-- Same as releaseBatch, for a single record of the batch.
+releaseRecord:
+UPDATE OR IGNORE sync_delta_queue
+SET status = CASE WHEN :permanent = 1 OR attempt_count + 1 >= :maxAttempts THEN 'FAILED' ELSE 'PENDING' END,
+    batch_id = NULL,
+    attempt_count = attempt_count + 1,
+    last_error = :error,
+    updated_at = strftime('%s', 'now')
+WHERE batch_id = :batchId
+AND table_name = :tableName
+AND record_id = :recordId
+AND status = 'IN_FLIGHT';
+
+-- Crash recovery: anything still IN_FLIGHT belongs to an upload that never reported back.
+recoverInFlight:
+UPDATE OR IGNORE sync_delta_queue
+SET status = 'PENDING',
+    batch_id = NULL,
+    updated_at = strftime('%s', 'now')
+WHERE status = 'IN_FLIGHT';
+
+dropRecoveredLeftovers:
+DELETE FROM sync_delta_queue
+WHERE status = 'IN_FLIGHT';
+
+requeueFailed:
+UPDATE OR IGNORE sync_delta_queue
+SET status = 'PENDING',
+    batch_id = NULL,
+    updated_at = strftime('%s', 'now')
+WHERE status = 'FAILED'
+AND updated_at <= :olderThan;
+
+dropRequeuedLeftovers:
+DELETE FROM sync_delta_queue
+WHERE status = 'FAILED'
+AND updated_at <= :olderThan;
+
+getState:
+SELECT value
+FROM sync_state
+WHERE key = :key;
+
+setState:
+INSERT OR REPLACE INTO sync_state(key, value)
+VALUES (:key, :value);
+
+-- Helpers for applying remote deltas. Raising is_syncing before touching a row makes the version
+-- triggers ignore the write; it is lowered again inside the same transaction.
+setMangaSyncing:
+UPDATE mangas
+SET is_syncing = :isSyncing
+WHERE _id = :mangaId;
+
+setChapterSyncing:
+UPDATE chapters
+SET is_syncing = :isSyncing
+WHERE _id = :chapterId;
+
+getMangaIdBySourceAndUrl:
+SELECT _id
+FROM mangas
+WHERE source = :source
+AND url = :url
+LIMIT 1;
+
+getCategoryIdsAndNames:
+SELECT _id, name
+FROM categories
+WHERE _id > 0;
